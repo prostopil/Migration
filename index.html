@@ -1,0 +1,352 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Инструкция по миграции сервера</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-bash.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-sql.min.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1 data-editable="true">Миграция сервера</h1>
+      <p class="subtitle" data-editable="true">Инструкция по переносу данных на новый сервер Debian</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="edit-controls">
+      <button id="editModeBtn" class="edit-btn">Режим редактирования</button>
+      <button id="saveChangesBtn" class="save-btn" style="display: none;">Сохранить изменения</button>
+      <button id="cancelChangesBtn" class="cancel-btn" style="display: none;">Отменить</button>
+    </div>
+
+    <nav class="toc">
+      <h2>Содержание</h2>
+      <ul>
+        <li>
+          <a href="#prerequisites">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm3 3h8v8H8V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Предварительные требования
+          </a>
+        </li>
+        <li>
+          <a href="#installation">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 22v-8M12 14l7-4M5 10l7 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Установка компонентов
+          </a>
+        </li>
+        <li>
+          <a href="#migration">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M4 4l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Процесс миграции
+          </a>
+        </li>
+        <li>
+          <a href="#scripts">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M8 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V7l-4-4H8z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M14 3v4h4M10 13h4M10 17h4M8 9h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Скрипты миграции
+          </a>
+        </li>
+        <li>
+          <a href="#commands">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M4 17l6-6-6-6M12 19h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Команды настройки
+          </a>
+        </li>
+        <li>
+          <a href="#files">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V9l-7-7z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M13 3v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+            Файлы для миграции
+          </a>
+        </li>
+        <li>
+          <a href="#verification">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Проверка после миграции
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <section id="prerequisites">
+      <h2>Предварительные требования</h2>
+      <div class="requirements-grid">
+        <div class="requirement-card" data-editable="true" data-type="debian">
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.14-7-7 3.14-7 7-7z" fill="currentColor"/>
+          </svg>
+          <h3>Debian</h3>
+          <p>Debian 11 "Bullseye" или выше</p>
+        </div>
+
+        <div class="requirement-card" data-editable="true" data-type="zabbix">
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm3 3h8v8H8V8z" fill="currentColor"/>
+          </svg>
+          <h3>Zabbix</h3>
+          <p>Zabbix Server 6.0 LTS</p>
+        </div>
+
+        <div class="requirement-card" data-editable="true" data-type="postgresql">
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm3 3h8v8H8V8z" fill="currentColor"/>
+          </svg>
+          <h3>PostgreSQL</h3>
+          <p>PostgreSQL 13 или выше</p>
+        </div>
+
+        <div class="requirement-card" data-editable="true" data-type="nginx">
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="currentColor"/>
+          </svg>
+          <h3>Nginx</h3>
+          <p>Nginx Web Server</p>
+        </div>
+
+        <div class="requirement-card" data-editable="true" data-type="php">
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.14-7-7 3.14-7 7-7z" fill="currentColor"/>
+            <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <h3>PHP-FPM</h3>
+          <p>PHP 7.4 или выше с модулями</p>
+        </div>
+
+        <div class="requirement-card" data-editable="true" data-type="timescaledb">
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.14-7-7 3.14-7 7-7z" fill="currentColor"/>
+            <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <h3>TimescaleDB</h3>
+          <p>TimescaleDB для хранения истории</p>
+        </div>
+
+        <div class="requirement-card" data-editable="true" data-type="redis">
+          <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm3 3h8v8H8V8z" fill="currentColor"/>
+          </svg>
+          <h3>Redis</h3>
+          <p>Redis для кэширования данных</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="installation">
+      <h2>Установка компонентов</h2>
+      <div class="code-block" data-editable="true">
+        <pre><code class="language-bash"># Обновление системы
+apt update && apt upgrade -y
+
+# Установка PostgreSQL
+apt install postgresql postgresql-contrib -y
+
+# Установка Nginx
+apt install nginx -y
+
+# Установка PHP и необходимых модулей
+apt install php-fpm php-pgsql php-mbstring php-xml php-gd php-curl -y
+
+# Установка Zabbix
+wget https://repo.zabbix.com/zabbix/6.0/debian/pool/main/z/zabbix-release/zabbix-release_6.0-4%2Bdebian11_all.deb
+dpkg -i zabbix-release_6.0-4+debian11_all.deb
+apt update
+apt install zabbix-server-pgsql zabbix-frontend-php zabbix-nginx-conf zabbix-sql-scripts zabbix-agent -y</code></pre>
+      </div>
+    </section>
+
+    <section id="migration">
+      <h2>Процесс миграции</h2>
+      <div class="timeline" data-editable="true">
+        <div class="timeline-item">
+          <div class="timeline-content">
+            <h3>1. Подготовка к миграции</h3>
+            <p>Создание резервной копии базы данных на старом сервере</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-content">
+            <h3>2. Перенос данных</h3>
+            <p>Копирование файлов и восстановление базы данных</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-content">
+            <h3>3. Настройка нового сервера</h3>
+            <p>Конфигурация служб и проверка работоспособности</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="scripts">
+      <h2>Скрипты миграции</h2>
+      <div class="tabs" data-editable="true">
+        <button class="tab-btn active" onclick="openTab('backup')">Резервное копирование</button>
+        <button class="tab-btn" onclick="openTab('restore')">Восстановление</button>
+        <button class="tab-btn" onclick="openTab('config')">Конфигурация</button>
+      </div>
+      
+      <div id="backup" class="tab-content active" data-editable="true">
+        <h3>Скрипт резервного копирования</h3>
+        <pre><code class="language-bash">#!/bin/bash
+# Backup script
+DATE=$(date +%Y-%m-%d_%H-%M-%S)
+BACKUP_DIR="/backup"
+
+# Create backup directory
+mkdir -p $BACKUP_DIR
+
+# Backup PostgreSQL database
+pg_dump -U zabbix zabbix > $BACKUP_DIR/zabbix_db_$DATE.sql
+
+# Backup configuration files
+tar -czf $BACKUP_DIR/zabbix_config_$DATE.tar.gz /etc/zabbix
+
+# Backup custom scripts and templates
+tar -czf $BACKUP_DIR/zabbix_scripts_$DATE.tar.gz /usr/lib/zabbix/</code></pre>
+      </div>
+
+      <div id="restore" class="tab-content" data-editable="true">
+        <h3>Скрипт восстановления</h3>
+        <pre><code class="language-bash">#!/bin/bash
+# Restore script
+BACKUP_FILE=$1
+
+if [ -z "$BACKUP_FILE" ]; then
+  echo "Usage: $0 backup_file.sql"
+  exit 1
+fi
+
+# Create zabbix database and user
+sudo -u postgres psql -c "CREATE USER zabbix WITH PASSWORD 'your_password';"
+sudo -u postgres psql -c "CREATE DATABASE zabbix OWNER zabbix;"
+
+# Restore database
+psql -U zabbix zabbix < $BACKUP_FILE
+
+# Reset Zabbix server
+systemctl restart zabbix-server</code></pre>
+      </div>
+
+      <div id="config" class="tab-content" data-editable="true">
+        <h3>Настройка конфигурации</h3>
+        <pre><code class="language-bash"># Конфигурация Zabbix
+sed -i 's/# DBHost=localhost/DBHost=localhost/' /etc/zabbix/zabbix_server.conf
+sed -i 's/# DBPassword=/DBPassword=your_password/' /etc/zabbix/zabbix_server.conf
+
+# Настройка PHP для Zabbix
+cat > /etc/php/7.4/fpm/conf.d/99-zabbix.ini << EOF
+php_value[date.timezone] = Europe/Moscow
+php_value[post_max_size] = 16M
+php_value[max_execution_time] = 300
+php_value[max_input_time] = 300
+php_value[memory_limit] = 128M
+EOF</code></pre>
+      </div>
+    </section>
+
+    <section id="commands">
+      <h2>Команды настройки</h2>
+      <div class="command-groups" data-editable="true">
+        <div class="command-group">
+          <h3>Основные команды</h3>
+          <div class="command-list">
+            <div class="command-item">
+              <pre><code class="language-bash">systemctl status nginx</code></pre>
+              <p class="command-description">Проверка статуса Nginx</p>
+              <button type="button" class="delete-command-btn">×</button>
+            </div>
+            <div class="command-item">
+              <pre><code class="language-bash">netstat -tulpn | grep LISTEN</code></pre>
+              <p class="command-description">Проверка открытых портов</p>
+              <button type="button" class="delete-command-btn">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="add-command-group-btn">
+        <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+          <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        Добавить группу команд
+      </button>
+      <button class="add-command-btn">
+        <svg class="icon" viewBox="0 0 24 24" width="24" height="24">
+          <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        Добавить команду
+      </button>
+    </section>
+
+    <section id="files">
+      <h2>Файлы для миграции</h2>
+      <div class="file-upload-section">
+        <input type="file" id="fileInput" style="display: none;" multiple>
+        <div class="upload-zone">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h3>Перетащите файлы сюда или нажмите для загрузки</h3>
+          <p>Поддерживаются файлы любого формата</p>
+        </div>
+        <div class="file-list"></div>
+      </div>
+    </section>
+
+    <section id="verification">
+      <h2>Проверка после миграции</h2>
+      <div class="checklist" data-editable="true">
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Проверка доступности веб-интерфейса Zabbix</span>
+        </label>
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Проверка подключения агентов</span>
+        </label>
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Проверка работы триггеров</span>
+        </label>
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Провер!ка получения данных с хостов</span>
+        </label>
+        <label class="check-item">
+          <input type="checkbox">
+          <span>Проверка отправки уведомлений</span>
+        </label>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p data-editable="true"> 2024 Документация по миграции сервера</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
